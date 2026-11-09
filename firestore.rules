@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwnerUserDoc() {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phoneNumber == '6261371961'
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        );
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.email == 'tikaramrathod9@gmail.com'
+        || isOwnerUserDoc()
+      );
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidStudyLink(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && data.url is string && data.url.size() > 0 && data.url.size() <= 1000
+        && data.subject is string && data.subject in ['Math', 'Physics', 'Chemistry', 'Hindi', 'English']
+        && data.authorEmail is string
+        && data.authorId is string
+        && (!('description' in data) || data.description is string)
+        && (!('snapshotContent' in data) || data.snapshotContent is string);
+    }
+
+    function isValidUser(data) {
+      return data.userId is string
+        && data.email is string
+        && data.role is string && data.role in ['admin', 'student']
+        && data.membershipActive is bool
+        && (!('phoneNumber' in data) || data.phoneNumber is string)
+        && (!('pinCode' in data) || data.pinCode is string)
+        && (!('bookmarkedLinkIds' in data) || data.bookmarkedLinkIds is string);
+    }
+
+    function isValidMobileRegistration(data) {
+      return data.phoneNumber is string && data.phoneNumber.size() == 10
+        && data.pinCode is string && data.pinCode.size() >= 4 && data.pinCode.size() <= 6
+        && data.studentName is string && data.studentName.size() > 0
+        && data.ownerUid is string
+        && data.membershipActive is bool;
+    }
+
+    function isValidAppConfig(data) {
+      return data.monthlyPriceInr is number && data.monthlyPriceInr > 0
+        && data.quarterlyPriceInr is number && data.quarterlyPriceInr > 0
+        && data.annualPriceInr is number && data.annualPriceInr > 0
+        && data.upiVpa is string && data.upiVpa.size() > 0
+        && data.merchantDisplayName is string && data.merchantDisplayName.size() > 0;
+    }
+
+    // Study Links collection
+    match /study_links/{linkId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && (isAdmin() || request.auth.uid == request.resource.data.authorId) && isValidStudyLink(request.resource.data);
+      allow update: if isAuthenticated() && (isAdmin() || request.auth.uid == resource.data.authorId) && isValidStudyLink(request.resource.data);
+      allow delete: if isAuthenticated() && (isAdmin() || request.auth.uid == resource.data.authorId);
+    }
+
+    // Users & Memberships collection
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if (isOwner(userId) || isAdmin()) && isValidUser(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Mobile Registrations collection (binds student mobile number + PIN to membership & saved data)
+    match /mobile_registrations/{phoneNumber} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && (isAdmin() || request.resource.data.ownerUid == request.auth.uid)
+        && isValidMobileRegistration(request.resource.data);
+      allow update: if isAuthenticated()
+        && (isAdmin() || resource.data.ownerUid == request.auth.uid || request.resource.data.pinCode == resource.data.pinCode)
+        && isValidMobileRegistration(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // App Configuration collection (customizable by Owner 6261371961 / Admin)
+    match /app_config/{configId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin() && isValidAppConfig(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}

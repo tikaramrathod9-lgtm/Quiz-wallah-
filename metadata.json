@@ -1,0 +1,6 @@
+{
+  "name": "Edustudy pro",
+  "description": "Study links manager with subject tabs, Firestore sync, offline caching, and Razorpay/UPI membership paywall.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

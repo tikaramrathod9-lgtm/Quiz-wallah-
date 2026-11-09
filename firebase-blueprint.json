@@ -1,0 +1,92 @@
+{
+  "entities": {
+    "StudyLink": {
+      "title": "StudyLink",
+      "description": "Educational study link with subject category and offline snapshot",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Display title of the study link" },
+        "url": { "type": "string", "description": "Direct web URL of the study material" },
+        "subject": { "type": "string", "enum": ["Math", "Physics", "Chemistry", "Hindi", "English"], "description": "Subject category" },
+        "description": { "type": "string", "description": "Notes or overview of the link" },
+        "snapshotContent": { "type": "string", "description": "Offline summary or page snapshot text" },
+        "authorEmail": { "type": "string", "description": "Email of the author/admin who added the link" },
+        "authorId": { "type": "string", "description": "Firebase UID of author" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp" }
+      },
+      "required": ["title", "url", "subject", "authorEmail", "authorId"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with mobile number, role, and membership subscription status",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "description": "User Google email address" },
+        "phoneNumber": { "type": "string", "description": "10-digit registered mobile number of the student or owner" },
+        "pinCode": { "type": "string", "description": "4-digit security PIN for mobile number login" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "role": { "type": "string", "description": "admin or student" },
+        "membershipActive": { "type": "boolean", "description": "Whether user has an active paid membership" },
+        "membershipExpiresAt": { "type": "string", "format": "date-time", "description": "Membership expiry timestamp" },
+        "planType": { "type": "string", "description": "Plan tier (free, monthly, quarterly, annual)" },
+        "bookmarkedLinkIds": { "type": "string", "description": "Comma-separated saved link IDs for this student" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last profile update timestamp" }
+      },
+      "required": ["userId", "email", "role", "membershipActive"]
+    },
+    "MobileRegistration": {
+      "title": "MobileRegistration",
+      "description": "Mobile number registry linking a student's phone number to their membership and saved data",
+      "type": "object",
+      "properties": {
+        "phoneNumber": { "type": "string", "description": "10-digit mobile number" },
+        "pinCode": { "type": "string", "description": "4-digit PIN for mobile login verification" },
+        "studentName": { "type": "string", "description": "Student full name" },
+        "ownerUid": { "type": "string", "description": "Last linked Firebase Auth UID" },
+        "ownerEmail": { "type": "string", "description": "Last linked Google email" },
+        "membershipActive": { "type": "boolean", "description": "Whether this mobile number has an active membership" },
+        "membershipExpiresAt": { "type": "string", "format": "date-time", "description": "Membership expiry timestamp" },
+        "planType": { "type": "string", "description": "Active plan tier" },
+        "bookmarkedLinkIds": { "type": "string", "description": "Comma-separated bookmarked study link IDs saved for this mobile number" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last sync timestamp" }
+      },
+      "required": ["phoneNumber", "pinCode", "studentName", "ownerUid", "membershipActive"]
+    },
+    "AppConfig": {
+      "title": "AppConfig",
+      "description": "Dynamic app configuration customizable by Owner 6261371961",
+      "type": "object",
+      "properties": {
+        "announcementBanner": { "type": "string", "description": "Custom announcement banner message for all students" },
+        "monthlyPriceInr": { "type": "number", "description": "Monthly membership price in INR" },
+        "quarterlyPriceInr": { "type": "number", "description": "Quarterly membership price in INR" },
+        "annualPriceInr": { "type": "number", "description": "Annual membership price in INR" },
+        "upiVpa": { "type": "string", "description": "Target UPI ID for receiving payments" },
+        "merchantDisplayName": { "type": "string", "description": "Merchant name shown during payment" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last updated timestamp" }
+      },
+      "required": ["monthlyPriceInr", "quarterlyPriceInr", "annualPriceInr", "upiVpa", "merchantDisplayName"]
+    }
+  },
+  "firestore": {
+    "/study_links/{linkId}": {
+      "schema": "StudyLink",
+      "description": "Collection of all curated study links categorized by subject"
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profiles, mobile numbers, roles, and membership access states"
+    },
+    "/mobile_registrations/{phoneNumber}": {
+      "schema": "MobileRegistration",
+      "description": "Student mobile number accounts persisting membership and saved links by phone number"
+    },
+    "/app_config/{configId}": {
+      "schema": "AppConfig",
+      "description": "Owner-customizable app settings, pricing, and announcements"
+    }
+  }
+}
